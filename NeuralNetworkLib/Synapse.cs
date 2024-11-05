@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace NeuralNetworkLib
 {
-    internal class EmbeddingMatrix
+    internal class Synapse
     {
+        public Synapse(Neuron neuron, int weight) 
+        {
+            throw new NotImplementedException();
+        }
     }
 }
