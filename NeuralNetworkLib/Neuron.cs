@@ -8,6 +8,7 @@ namespace NeuralNetworkLib
         private int? neuronValue;
         private readonly IEnumerable<Synapse> outgoingNeurons;
         private readonly IEnumerable<Synapse> incomingNeurons;
+        private object syncRoot;
 
         public Neuron()
         {
@@ -15,15 +16,17 @@ namespace NeuralNetworkLib
             incomingNeurons = new List<Synapse>();
             bias = 0;
             this.neuronValue = null;
+            this.syncRoot = new object();
         }
 
         /// <summary>
         /// Used to set a value when the neuron belongs to the input layer
         /// </summary>
         /// <param name="value"></param>
-        public void SetValue(int value)
+        public async Task SetValue(int value)
         {
             this.neuronValue = value;
+            await this.InvokeNextLayer();
         }
 
         public void ConnectToNextLayer(Neuron successor, int weight)
@@ -33,29 +36,41 @@ namespace NeuralNetworkLib
             successor.incomingNeurons.Append(synapse);
         }
 
-        private void NotifyIncomingValue(Synapse synapse)
+        private async void NotifyIncomingValue(Synapse synapse)
         {
-            // If we have recieved all inputs from all predecessors, we can calculate the value for this neuron.
-            if (this.incomingNeurons.All( synapse => synapse.Value.HasValue))
+            var allIncomingValuesPresent = false;
+            lock (syncRoot)
+            {
+                // If we have recieved all inputs from all predecessors, we can calculate the value for this neuron.
+                if (this.incomingNeurons.All(synapse => synapse.Value.HasValue))
+                {
+                    allIncomingValuesPresent = true;
+                }
+            }
+
+            if (allIncomingValuesPresent)
             {
                 this.neuronValue = this.incomingNeurons.Aggregate<Synapse, int>(
                     seed: 0,
-                    (accumulatedValue, synapse) => accumulatedValue + synapse.Value!.Value) 
+                    (accumulatedValue, synapse) => accumulatedValue + synapse.Value!.Value)
                     + this.bias;
-                this.InvokeNextLayer();
+                await this.InvokeNextLayer();
             }
         }
 
-        public void InvokeNextLayer()
+        public async Task InvokeNextLayer()
         {
             Debug.Assert(this.neuronValue.HasValue);
 
-            foreach (var synapse in outgoingNeurons)
+            await Task.Run(() =>
             {
-                var synapseValue = this.neuronValue * synapse.Weight;
-                synapse.Value = synapseValue;
-                synapse.Destination!.NotifyIncomingValue(synapse);
-            }
+                Parallel.ForEach(outgoingNeurons, synapse =>
+                    {
+                        var synapseValue = this.neuronValue * synapse.Weight;
+                        synapse.Value = synapseValue;
+                        synapse.Destination!.NotifyIncomingValue(synapse);
+                    });
+            });
         }
     }
 }
