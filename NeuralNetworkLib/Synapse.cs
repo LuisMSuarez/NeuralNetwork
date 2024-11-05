@@ -10,14 +10,18 @@ namespace NeuralNetworkLib
     {
         public int Weight { get; private set; }
 
-        public Neuron Neuron { get; private set; }
+        public int? Value { get;  set; }
 
-        public int MyProperty { get; private set; }
+        public Neuron? Source { get;}
 
-        public Synapse(Neuron neuron, int weight) 
+        public Neuron? Destination { get;}
+
+        public Synapse(Neuron source, Neuron destination, int weight) 
         {
-            this.Neuron = neuron;
             this.Weight = weight;
+            this.Value = null;
+            this.Source = source;
+            this.Destination = destination;
         }
     }
 }

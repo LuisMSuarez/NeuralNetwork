@@ -1,19 +1,20 @@
-﻿namespace NeuralNetworkLib
+﻿using System.Diagnostics;
+
+namespace NeuralNetworkLib
 {
     public class Neuron
     {
         private int bias;
-        private int value;
-        private readonly IEnumerable<Synapse> successors;
-        private readonly IEnumerable<Neuron> predecessors;
-        private readonly IEnumerable<int> values;
+        private int? neuronValue;
+        private readonly IEnumerable<Synapse> outgoingNeurons;
+        private readonly IEnumerable<Synapse> incomingNeurons;
 
         public Neuron()
         {
-            successors = new List<Synapse>();
-            predecessors = new List<Neuron>();
-            this.values = new List<int>();
+            outgoingNeurons = new List<Synapse>();
+            incomingNeurons = new List<Synapse>();
             bias = 0;
+            this.neuronValue = null;
         }
 
         /// <summary>
@@ -22,39 +23,38 @@
         /// <param name="value"></param>
         public void SetValue(int value)
         {
-            this.value = value;
+            this.neuronValue = value;
         }
 
-        public void ConnectToSuccessor(Neuron successor, int weight)
+        public void ConnectToNextLayer(Neuron successor, int weight)
         {
-            var synapse = new Synapse(successor, weight);
-            successors.Append(synapse);
-            successor.ConnectToPredecessor(this);
+            var synapse = new Synapse(this, successor, weight);
+            outgoingNeurons.Append(synapse);
+            successor.incomingNeurons.Append(synapse);
         }
 
-        public void ConnectToPredecessor(Neuron predecessor)
+        private void NotifyIncomingValue(Synapse synapse)
         {
-            predecessors.Append(predecessor);
-        }
-
-        private void InputValue(int value)
-        {
-            this.values.Append(value);
-
-            // If we have recieved all inputs from all predecessors, we can calculate the value for this neuron
-            if (this.values.Count() == this.predecessors.Count())
+            // If we have recieved all inputs from all predecessors, we can calculate the value for this neuron.
+            if (this.incomingNeurons.All( synapse => synapse.Value.HasValue))
             {
-                this.value = this.values.Aggregate((item, accumulated) => accumulated + item) + this.bias;
+                this.neuronValue = this.incomingNeurons.Aggregate<Synapse, int>(
+                    seed: 0,
+                    (accumulatedValue, synapse) => accumulatedValue + synapse.Value!.Value) 
+                    + this.bias;
                 this.InvokeNextLayer();
             }
         }
 
         public void InvokeNextLayer()
         {
-            foreach (var synapse in successors)
+            Debug.Assert(this.neuronValue.HasValue);
+
+            foreach (var synapse in outgoingNeurons)
             {
-                var synapseValue = this.value * synapse.Weight;
-                synapse.Neuron.InputValue(synapseValue);
+                var synapseValue = this.neuronValue * synapse.Weight;
+                synapse.Value = synapseValue;
+                synapse.Destination!.NotifyIncomingValue(synapse);
             }
         }
     }
