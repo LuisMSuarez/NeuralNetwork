@@ -23,10 +23,10 @@ namespace NeuralNetworkLib
         /// Used to set a value when the neuron belongs to the input layer
         /// </summary>
         /// <param name="value"></param>
-        public async Task SetValue(int value)
+        public async Task SetValueAsync(int value)
         {
             this.neuronValue = value;
-            await this.InvokeNextLayer();
+            await this.InvokeNextLayerAsync();
         }
 
         public void ConnectToNextLayer(Neuron successor, int weight)
@@ -36,7 +36,7 @@ namespace NeuralNetworkLib
             successor.incomingNeurons.Append(synapse);
         }
 
-        private async void NotifyIncomingValue(Synapse synapse)
+        private async void NotifyIncomingValueAsync(Synapse synapse)
         {
             var allIncomingValuesPresent = false;
             lock (syncRoot)
@@ -54,11 +54,11 @@ namespace NeuralNetworkLib
                     seed: 0,
                     (accumulatedValue, synapse) => accumulatedValue + synapse.Value!.Value)
                     + this.bias;
-                await this.InvokeNextLayer();
+                await this.InvokeNextLayerAsync();
             }
         }
 
-        public async Task InvokeNextLayer()
+        public async Task InvokeNextLayerAsync()
         {
             Debug.Assert(this.neuronValue.HasValue);
 
@@ -68,7 +68,7 @@ namespace NeuralNetworkLib
                     {
                         var synapseValue = this.neuronValue * synapse.Weight;
                         synapse.Value = synapseValue;
-                        synapse.Destination!.NotifyIncomingValue(synapse);
+                        synapse.Destination!.NotifyIncomingValueAsync(synapse);
                     });
             });
         }
