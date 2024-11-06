@@ -5,9 +5,9 @@ namespace NeuralNetworkLib
     public class Neuron
     {
         private int bias;
-        private int? neuronValue;
-        private readonly IEnumerable<Synapse> outgoingNeurons;
-        private readonly IEnumerable<Synapse> incomingNeurons;
+        private double? neuronValue;
+        private readonly List<Synapse> outgoingNeurons;
+        private readonly List<Synapse> incomingNeurons;
         private object syncRoot;
 
         public Neuron()
@@ -15,7 +15,6 @@ namespace NeuralNetworkLib
             outgoingNeurons = new List<Synapse>();
             incomingNeurons = new List<Synapse>();
             bias = 0;
-            this.neuronValue = null;
             this.syncRoot = new object();
         }
 
@@ -23,57 +22,78 @@ namespace NeuralNetworkLib
         /// Used to set a value when the neuron belongs to the input layer
         /// </summary>
         /// <param name="value"></param>
-        public async Task SetValueAsync(int value)
+        public async Task SetValueAsync(double value)
         {
             this.neuronValue = value;
             await this.InvokeNextLayerAsync();
         }
 
-        public void ConnectToNextLayer(Neuron successor, int weight)
+        public double? GetValue()
         {
-            var synapse = new Synapse(this, successor, weight);
-            outgoingNeurons.Append(synapse);
-            successor.incomingNeurons.Append(synapse);
+            return this.neuronValue;
         }
 
-        private async void IncomingValueCallbackAsync(Synapse synapse)
+        public void ConnectToNextLayer(Neuron successor, double weight)
         {
-            var allIncomingValuesPresent = false;
+            var synapse = new Synapse(this, successor, weight);
+            outgoingNeurons.Add(synapse);
+            successor.incomingNeurons.Add(synapse);
+        }
 
+        private async Task IncomingValueCallbackAsync(Synapse synapse)
+        {
             // Incoming callbacks can fire in parallel.  We need to have synchronization when testing if all incoming neurons have a value.
+            bool invokeNextLayer = false;
+
             lock (syncRoot)
             {
                 // If we have recieved all inputs from all predecessors, we can calculate the value for this neuron.
                 if (this.incomingNeurons.All(synapse => synapse.Value.HasValue))
                 {
-                    allIncomingValuesPresent = true;
+                    invokeNextLayer = true;
                 }
             }
 
-            if (allIncomingValuesPresent)
+            // Cannot call async inside a lock statement.
+            if (invokeNextLayer)
             {
-                this.neuronValue = this.incomingNeurons.Aggregate<Synapse, int>(
-                    seed: 0,
-                    (accumulatedValue, synapse) => accumulatedValue + synapse.Value!.Value)
-                    + this.bias;
-                Console.WriteLine($"Neuron has value {neuronValue}");
-                await this.InvokeNextLayerAsync();
+                // We treat the computation of the neuron value from all of the incoming synapses as a
+                // "complex" operation that we want to run in the thread pool asynchronously.
+                // If the PC has multiple cores, computation of this value can happen in parallel across cores.
+                await Task.Run( async () =>
+                {
+                    this.neuronValue = this.incomingNeurons.Aggregate<Synapse, double>(
+                            seed: 0,
+                            (accumulatedValue, synapse) => accumulatedValue + synapse.Value!.Value)
+                            + this.bias;
+                    Console.WriteLine($"Neuron has value: {neuronValue}");
+
+                    // Once this neuron has a computed value, we can invoke the next layer
+                    await this.InvokeNextLayerAsync();
+                });
             }
         }
 
-        public async Task InvokeNextLayerAsync()
+        private async Task InvokeNextLayerAsync()
         {
             Debug.Assert(this.neuronValue.HasValue);
+            Task[] nextLayerTasks = new Task[outgoingNeurons.Count];
 
-            await Task.Run(() =>
+            foreach(var index in Enumerable.Range(0, outgoingNeurons.Count))
             {
-                Parallel.ForEach(outgoingNeurons, synapse =>
-                    {
-                        var synapseValue = this.neuronValue * synapse.Weight;
-                        synapse.Value = synapseValue;
-                        synapse.Destination!.IncomingValueCallbackAsync(synapse);
-                    });
-            });
+                // We treat the computation of the outgoing synapse values from this neuron's value and subsequent call of the next layer as a
+                // "complex" operation that we want to run in the thread pool asynchronously.
+                // If the PC has multiple cores, computation of can happen in parallel across cores.
+                nextLayerTasks[index] = Task.Run(async () =>
+                {
+                    var synapse = outgoingNeurons[index];
+                    var synapseValue = this.neuronValue * synapse.Weight;
+                    synapse.Value = synapseValue;
+                    await synapse.Destination!.IncomingValueCallbackAsync(synapse);
+                });
+            };
+
+            await Task.WhenAll(nextLayerTasks);
         }
     }
 }
