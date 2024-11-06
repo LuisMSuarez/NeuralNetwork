@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NeuralNetworkLib
+﻿namespace NeuralNetworkLib
 {
-    internal class Embedding
+    using System.Numerics;
+
+    public class Embedding
     {
+        public required string Label { get; set; }
+        public Vector<float> Embeddings { get; set; }
     }
 }

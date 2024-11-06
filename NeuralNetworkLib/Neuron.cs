@@ -36,9 +36,11 @@ namespace NeuralNetworkLib
             successor.incomingNeurons.Append(synapse);
         }
 
-        private async void NotifyIncomingValueAsync(Synapse synapse)
+        private async void IncomingValueCallbackAsync(Synapse synapse)
         {
             var allIncomingValuesPresent = false;
+
+            // Incoming callbacks can fire in parallel.  We need to have synchronization when testing if all incoming neurons have a value.
             lock (syncRoot)
             {
                 // If we have recieved all inputs from all predecessors, we can calculate the value for this neuron.
@@ -54,6 +56,7 @@ namespace NeuralNetworkLib
                     seed: 0,
                     (accumulatedValue, synapse) => accumulatedValue + synapse.Value!.Value)
                     + this.bias;
+                Console.WriteLine($"Neuron has value {neuronValue}");
                 await this.InvokeNextLayerAsync();
             }
         }
@@ -68,7 +71,7 @@ namespace NeuralNetworkLib
                     {
                         var synapseValue = this.neuronValue * synapse.Weight;
                         synapse.Value = synapseValue;
-                        synapse.Destination!.NotifyIncomingValueAsync(synapse);
+                        synapse.Destination!.IncomingValueCallbackAsync(synapse);
                     });
             });
         }

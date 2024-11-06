@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NeuralNetworkLib
+﻿namespace NeuralNetworkLib
 {
     internal class Synapse
     {
@@ -12,11 +6,11 @@ namespace NeuralNetworkLib
 
         public int? Value { get;  set; }
 
-        public Neuron? Source { get;}
+        public Neuron Source { get;}
 
-        public Neuron? Destination { get;}
+        public Neuron Destination { get;}
 
-        public Synapse(Neuron source, Neuron destination, int weight) 
+        public Synapse(Neuron source, Neuron destination, int weight)
         {
             this.Weight = weight;
             this.Value = null;
