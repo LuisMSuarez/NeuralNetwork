@@ -10,13 +10,18 @@ namespace NeuralNetworkLib
         private readonly List<Synapse> incomingNeurons;
         private object syncRoot;
 
-        public Neuron()
+        public string? Label { get; set; }
+
+        public Neuron(string? label)
         {
             outgoingNeurons = new List<Synapse>();
             incomingNeurons = new List<Synapse>();
             bias = 0;
+            this.Label = label;
             this.syncRoot = new object();
         }
+
+        public Neuron() : this(null) { }
 
         /// <summary>
         /// Used to set a value when the neuron belongs to the input layer
@@ -32,6 +37,8 @@ namespace NeuralNetworkLib
         {
             return this.neuronValue;
         }
+
+
 
         public void ConnectToNextLayer(Neuron successor, double weight)
         {
