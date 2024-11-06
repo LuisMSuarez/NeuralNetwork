@@ -10,8 +10,8 @@ namespace NeuralNetworkCmd
             // This program uses a sample neural network described in this article:
             // https://towardsdatascience.com/understanding-llms-from-scratch-using-middle-school-math-e602d27ec876#:~:text=Llama%203.1.-,A%20simple%20neural%20network,-%3A
 
-            var flowerEmbedding = new Embedding { Label = "Rose", Embeddings = new Vector<double>([241, 200, 4, 59.5]) };
-            var leafEmbedding = new Embedding { Label = "Maple", Embeddings = new Vector<double>([32, 107, 56, 11.2f]) };
+            var flowerEmbedding = new Embedding { Label = "Rose", Vector = new Vector<double>([241, 200, 4, 59.5]) };
+            var leafEmbedding = new Embedding { Label = "Maple", Vector = new Vector<double>([32, 107, 56, 11.2f]) };
 
             var embeddings = new EmbeddingMatrix();
             embeddings.AddEmbedding(flowerEmbedding);
@@ -54,7 +54,7 @@ namespace NeuralNetworkCmd
             foreach (var index in Enumerable.Range(0, layer0neurons.Length))
             {
                 var neuron = layer0neurons[index];
-                layer0Tasks.Add(neuron.SetValueAsync(embedding.Embeddings[index]));
+                layer0Tasks.Add(neuron.SetValueAsync(embedding.Vector[index]));
             }
 
             // Calculation of the neural network is complete when propagation of values from the input layer all the way to the output layer completes.
