@@ -5,6 +5,6 @@
     public class Embedding
     {
         public required string Label { get; set; }
-        public Vector<double> Embeddings { get; set; }
+        public Vector<double> Vector { get; set; }
     }
 }
