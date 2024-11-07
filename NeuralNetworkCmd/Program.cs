@@ -1,4 +1,5 @@
 ﻿using NeuralNetworkLib;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace NeuralNetworkCmd
@@ -19,8 +20,12 @@ namespace NeuralNetworkCmd
 
             var embedding = embeddings.Embeddings.First();
 
-            Neuron[] layer0neurons = [new Neuron(), new Neuron(), new Neuron(), new Neuron()];
+            // Layer 0 is the Input layer.
+            Neuron[] layer0neurons = [new Neuron("R"), new Neuron("G"), new Neuron("B"), new Neuron("V")];
             Neuron[] layer1neurons = [new Neuron(), new Neuron(), new Neuron()];
+            
+            // In this neural network, layer 2 represents the output layer, where the neuron with the
+            // largest value determines the classification of the input by the network.
             Neuron[] layer2neurons = [new Neuron("Leaf"), new Neuron("Flower")];
 
             // Connect layer 0 neurons to layer 1 neurons
@@ -67,6 +72,8 @@ namespace NeuralNetworkCmd
 
             // The output neuron with the largest value determines the classification of the input.
             var classification = layer2neurons.MaxBy(neuron => neuron.GetValue());
+
+            Debug.Assert(classification != null);
             Console.WriteLine($"The input is a {classification!.Label}");
         }
     }
