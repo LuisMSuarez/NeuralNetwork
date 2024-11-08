@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
-
-namespace NeuralNetworkLib
+﻿namespace NeuralNetworkLib
 {
+    using System.Diagnostics;
+
     public class Neuron
     {
         private int bias;
