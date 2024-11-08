@@ -1,6 +1,6 @@
 Implementation of a Neural Network, with parallel execution neuron values as the partial results flow through the network.
 
-The motivation for this project came from reading the [following article](https://towardsdatascience.com/understanding-llms-from-scratch-using-middle-school-math-e602d27ec876)
+The motivation for this project came from reading the [following article](https://towardsdatascience.com/understanding-llms-from-scratch-using-middle-school-math-e602d27ec876).  The article explains concepts of LLMs and Neural netoworks using an example that classifies inputs according to whether they represent leaves or flowers, based on attributes such as Color (as RGB vector) and volume.
 
 As I read this article, I challenged myself to implement a model for the neural network, and an efficient implementation that would allow values to flow from one layer to the next as soon as they became available.
 A neural network is essentially an acyclic [directed graph](https://en.wikipedia.org/wiki/Directed_graph) where the vertices are the neurons and the edges represent connections between the neurons, that are labelled with weights.
