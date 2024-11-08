@@ -9,6 +9,7 @@ namespace NeuralNetworkLib
         private readonly List<Synapse> outgoingNeurons;
         private readonly List<Synapse> incomingNeurons;
         private object syncRoot;
+        private bool nextLayerInvoked;
 
         public string? Label { get; set; }
 
@@ -19,6 +20,7 @@ namespace NeuralNetworkLib
             bias = 0;
             this.Label = label;
             this.syncRoot = new object();
+            nextLayerInvoked = false;
         }
 
         public Neuron() : this(null) { }
@@ -38,8 +40,6 @@ namespace NeuralNetworkLib
             return this.neuronValue;
         }
 
-
-
         public void ConnectToNextLayer(Neuron successor, double weight)
         {
             var synapse = new Synapse(this, successor, weight);
@@ -54,14 +54,18 @@ namespace NeuralNetworkLib
 
             lock (syncRoot)
             {
-                // If we have recieved all inputs from all predecessors, we can calculate the value for this neuron.
-                if (this.incomingNeurons.All(synapse => synapse.Value.HasValue))
+                // Callbacks from neurons in the previous layer can arrive at any order and at any time.
+                // In the critical section, we must check that we have recieved all inputs from all predecessors to allow us to calculate the value of this neuron,
+                // and also set a flag to signal that no other callback should invoke the next layer to avoid duplicate calculations.
+                if (!this.nextLayerInvoked &&
+                    this.incomingNeurons.All(synapse => synapse.Value.HasValue))
                 {
                     invokeNextLayer = true;
+                    this.nextLayerInvoked = true;
                 }
             }
 
-            // Cannot call async inside a lock statement.
+            // .Net doesn't allow calling of async code inside a lock statement, so we use the 'invokeNextLayer' variable as a flag to call the async code
             if (invokeNextLayer)
             {
                 // We treat the computation of the neuron value from all of the incoming synapses as a

@@ -11,12 +11,12 @@ namespace NeuralNetworkCmd
             // This program uses a sample neural network described in this article:
             // https://towardsdatascience.com/understanding-llms-from-scratch-using-middle-school-math-e602d27ec876#:~:text=Llama%203.1.-,A%20simple%20neural%20network,-%3A
 
-            var flowerEmbedding = new Embedding { Label = "Rose", Vector = new Vector<double>([241, 200, 4, 59.5]) };
-            var leafEmbedding = new Embedding { Label = "Maple", Vector = new Vector<double>([32, 107, 56, 11.2f]) };
+            var leafEmbedding = new Embedding { Label = "Maple leaf", Vector = new Vector<double>([32, 107, 56, 11.2f]) };
+            var flowerEmbedding = new Embedding { Label = "Rose flower", Vector = new Vector<double>([241, 200, 4, 59.5]) };
 
             var embeddings = new EmbeddingMatrix();
-            embeddings.AddEmbedding(flowerEmbedding);
             embeddings.AddEmbedding(leafEmbedding);
+            embeddings.AddEmbedding(flowerEmbedding);
 
             var embedding = embeddings.Embeddings.First();
 
