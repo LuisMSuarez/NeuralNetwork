@@ -2,8 +2,13 @@ Implementation of a Neural Network, with parallel execution neuron values as the
 
 The motivation for this project came from reading the [following article](https://towardsdatascience.com/understanding-llms-from-scratch-using-middle-school-math-e602d27ec876).  The article explains concepts of LLMs and Neural networks using an example that classifies specimens according to whether they represent leaves or flowers, based on attributes such as Color (as RGB vector) and volume.
 
+The following image represents the neural network, and how it processes an input embedding to determine that the specimen is a 'leaf' and not a 'flower'.
+
+![image](https://github.com/user-attachments/assets/3d2d56dd-5a9b-412c-8df1-f198a6d8f5c4)
+
+
 As I read this article, I challenged myself to implement a model for the neural network, and an efficient implementation that would allow values to flow from one layer to the next as soon as they were computed.
-A neural network is essentially an acyclic [directed graph](https://en.wikipedia.org/wiki/Directed_graph) where the vertices are the neurons and the edges represent connections between the neurons, that are labelled with weights.
+The neural network is essentially an acyclic [directed graph](https://en.wikipedia.org/wiki/Directed_graph) where the vertices are the neurons and the edges represent connections between the neurons, that are labelled with weights.
 
 I built the model using constructs such as:
 * Neuron: Denotes a neuron in the neural network
